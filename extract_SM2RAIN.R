@@ -27,7 +27,7 @@ library(subsetnc)
 
 files <- list.files(path = "", pattern = "nc")                                  #List all nc files in the working directory
 
-df <- data.frame(matrix(nrow=0, ncol=num_stations+1))
+df <- data.frame(Date=as.Date(character()),matrix(nrow=0, ncol=num_stations))
 
 for (fname in files){
   
@@ -52,6 +52,8 @@ for (fname in files){
   time <- ncvar_get(nc_sub,"Time")
   
   sm2rain <- data.frame(chron(time, origin = date.origin[[model]]))
+  colnames(sm2rain)[1] <- "Date"
+  sm2rain$Date <- as.Date(sm2rain$Date)
   
   for (i in 1:num_stations) {
     print(paste("Reading station",stations$Name[i]))
@@ -66,15 +68,10 @@ for (fname in files){
   nc_close(nc_sub)
   
   names(sm2rain) <- c("Date", stations$Name)
-  sm2rain$Date <- as.Date(sm2rain$Date)
   
   colnames(df) <- colnames(sm2rain)
   for (i in 1:nrow(sm2rain)) df[nrow(df)+1,] <- sm2rain[i,]
 }
-
-df$Date <- as.Date(df$Date, 
-                   origin = as.Date(paste(rev(date.origin[[model]]),
-                                          collapse="-")))
 
 write.table(df, file=paste0(model,"_SM2RAIN.csv"), sep = ",",                   #CSV output
             row.names = FALSE, col.names = T)
